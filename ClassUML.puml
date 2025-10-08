@@ -14,20 +14,60 @@ package com.micahbaumann {
     package users {
         class User {
             - name: String[1]
+            - userID: String[1]
 
             + getName(): String
             + setName(in name: String): void
-            + setUser(in username: String): void
+            + getID(): String
+            + setUserFromDB(in username: String): void
+            + updateDBFromUser(): void
         }
 
         class Chef {
             - price: double[1]
+            - bookings: Booking [*]
 
             + getPrice(): Double
             + setPrice(in price: double): void
         }
 
         User <|-- Chef
+    }
+
+    package bookings {
+        enum BookingStatus {
+            CONFIRMED
+            PENDING
+            DENIED
+        }
+
+        class Booking {
+            - start: Datetime [1]
+            - end: Datetime [1]
+            - bookingID: String [1]
+            - status: BookingStatus
+
+            + getStart(): Datetime
+            + setStart(in start: Datetime): void
+            + getEnd(): Datetime
+            + setEnd(in end: Datetime): void
+            + getID(): String
+            + setBookingFromDB(in bookingID: String): void
+            + updateDBFromBooking(): void
+        }
+
+        Booking ..> BookingStatus
+    }
+    Chef *-- Booking
+
+    package endpoints {
+        class BaseController {
+            + login(): void
+        }
+        note right of BaseController::login
+          Annotated with:
+          @("/login")
+        end note
     }
 }
 
