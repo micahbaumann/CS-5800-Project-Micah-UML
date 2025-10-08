@@ -1,0 +1,13 @@
+@startuml
+'https://plantuml.com/activity-diagram-beta
+
+start
+
+:Grab all chef data;
+:Package name and price for each chef in an array;
+:Convert to JSON;
+:Return JSON;
+
+stop
+
+@enduml

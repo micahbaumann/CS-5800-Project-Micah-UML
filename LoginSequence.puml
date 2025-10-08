@@ -1,0 +1,18 @@
+@startuml
+'https://plantuml.com/sequence-diagram
+
+actor User
+participant System
+User -> System: Enter username and password
+
+alt Successful Login
+
+    System -> User: Send JWT and Refresh Token
+
+else Failed Login
+
+    System -> User: Send error message and code
+
+end
+
+@enduml

@@ -1,0 +1,18 @@
+@startuml
+'https://plantuml.com/activity-diagram-beta
+
+start
+
+:Submit username and password;
+:Validate username;
+:Validate password;
+fork
+:Generate JWT;
+fork again
+:Generate Refresh Token;
+end fork
+:Return JWT and Refresh Token;
+
+stop
+
+@enduml

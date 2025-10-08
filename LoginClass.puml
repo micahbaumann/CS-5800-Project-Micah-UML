@@ -1,0 +1,34 @@
+@startuml
+'https://plantuml.com/class-diagram
+
+package com.micahbaumann {
+    package database {
+        class DatabaseBase {
+            - user: String[1]
+            - password: String[1]
+
+            + query(in query: String): void
+        }
+    }
+
+    package users {
+        class User {
+            - name: String[1]
+
+            + getName(): String
+            + setName(in name: String): void
+            + setUser(in username: String): void
+        }
+
+        class Chef {
+            - price: double[1]
+
+            + getPrice(): Double
+            + setPrice(in price: double): void
+        }
+
+        User <|-- Chef
+    }
+}
+
+@enduml
