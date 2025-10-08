@@ -1,0 +1,23 @@
+@startuml
+'https://plantuml.com/activity-diagram-beta
+
+|Seller|
+start
+:Navigate to bookings page;
+
+|System|
+:Display all booking requests and confirmations;
+
+|Seller|
+:Select "Approve" or "Deny" button on booking;
+
+|System|
+if (Approved?) then (yes)
+  :Mark booking as complete;
+else (no)
+  :Delete booking request;
+endif
+
+stop
+
+@enduml

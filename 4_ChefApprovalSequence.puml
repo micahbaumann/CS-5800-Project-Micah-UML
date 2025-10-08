@@ -1,0 +1,17 @@
+@startuml
+'https://plantuml.com/sequence-diagram
+
+actor Seller
+participant System
+
+Seller -> System: Navigate to bookings page
+System -> Seller: Display all booking requests and confirmations
+Seller -> System: Select "Approve" or "Deny" button
+
+alt Approved
+    System -> System: Mark booking as complete
+else Denied
+    System -> System: Delete booking request
+end
+
+@enduml
