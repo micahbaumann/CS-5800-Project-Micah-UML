@@ -62,13 +62,106 @@ package com.micahbaumann {
 
     package endpoints {
         class BaseController {
-            + login(): void
+            + login(body: LoginBody): void
+            + listChefs(): ArrayList<Chef>
+            + createAccount(body: CreateAccountBody): void
+            + createChef(body: CreateChefBody): void
+            + viewChef(): Chef
+            + createBooking(body: CreateBookingBody): void
+            + viewBookings(): ArrayList<Booking>
+            + updateBooking(body: UpdateBookingBody): void
+            + refresh(): String
         }
+
         note right of BaseController::login
           Annotated with:
-          @("/login")
+          @PostMapping("/api/account/login")
         end note
+
+        note right of BaseController::listChefs
+          Annotated with:
+          @GetMapping("/api/chef/list")
+        end note
+
+        note right of BaseController::createAccount
+          Annotated with:
+          @PostMapping("/api/account/create")
+        end note
+
+        note right of BaseController::createChef
+          Annotated with:
+          @PostMapping("/api/chef/create")
+        end note
+
+        note left of BaseController::viewChef
+          Annotated with:
+          @GetMapping("/api/chef/view/{id}")
+        end note
+
+        note right of BaseController::createBooking
+          Annotated with:
+          @PostMapping("/api/booking/create")
+        end note
+
+        note left of BaseController::viewBookings
+          Annotated with:
+          @GetMapping("/api/booking/view")
+        end note
+
+        note right of BaseController::updateBooking
+          Annotated with:
+          @PutMapping("/api/booking/update/{id}")
+        end note
+
+        note left of BaseController::refresh
+          Annotated with:
+          @GetMapping("/api/token/refresh")
+        end note
+
+        package data_models {
+            class LoginBody {
+                + username: String [1]
+                + password: String [1]
+            }
+
+            class CreateAccountBody {
+                + username: String [1]
+                + password: String [1]
+            }
+
+            class CreateChefBody {
+                + userID: String [1]
+                + price: double [1]
+            }
+
+            class CreateBookingBody {
+                + start: Datetime [1]
+                + end: Datetime [1]
+            }
+
+            class UpdateBookingBody {
+                + start: Datetime [1]
+                + end: Datetime [1]
+                + status: String [1]
+            }
+        }
+
+        LoginBody <.. BaseController
+        Chef <.. BaseController
+        CreateAccountBody <.. BaseController
+        CreateChefBody <.. BaseController
+        CreateBookingBody <.. BaseController
+        UpdateBookingBody <.. BaseController
     }
+
+    BaseController ..> User
+    BaseController ..> Chef
+    BaseController ..> DatabaseBase
+    User ..> DatabaseBase
+    Chef ..> DatabaseBase
+    BaseController ..> Booking
+    BaseController ..> BookingStatus
+
 }
 
 @enduml
