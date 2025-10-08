@@ -1,0 +1,16 @@
+@startuml
+'https://plantuml.com/activity-diagram-beta
+
+|Buyer|
+start
+:Navigate to bookings page;
+
+|System|
+:Display all booking requests and confirmations;
+
+|Buyer|
+:View booking status (confirmed or pending);
+
+stop
+
+@enduml

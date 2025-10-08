@@ -1,0 +1,11 @@
+@startuml
+'https://plantuml.com/sequence-diagram
+
+actor Buyer
+participant System
+
+Buyer -> System: Navigate to bookings page
+System -> Buyer: Display all booking requests and confirmations
+Buyer -> System: View booking confirmation status
+
+@enduml
