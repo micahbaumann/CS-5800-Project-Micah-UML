@@ -1,0 +1,27 @@
+@startuml
+'https://plantuml.com/activity-diagram-beta
+
+|Buyer|
+start
+:Navigate to seller's product page;
+
+|System|
+:Display currently booked times;
+
+|Buyer|
+:Select "Book Me" button;
+
+|System|
+:Display booking form;
+
+|Buyer|
+:Enter address and date/time;
+
+|System|
+:Create new booking request;
+:Add booking to buyer's bookings page;
+:Add booking to seller's bookings page;
+
+stop
+
+@enduml

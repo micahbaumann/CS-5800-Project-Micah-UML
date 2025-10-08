@@ -1,0 +1,17 @@
+@startuml
+'https://plantuml.com/sequence-diagram
+
+actor Buyer
+actor Seller
+participant System
+
+Buyer -> System: Navigate to seller's product page
+System -> Buyer: Display currently booked times
+Buyer -> System: Select "Book Me" button
+System -> Buyer: Display booking form
+Buyer -> System: Enter address and date/time
+System -> System: Create new booking request
+System -> Buyer: Add booking to buyer's bookings page
+System -> Seller: Add booking to seller's bookings page
+
+@enduml

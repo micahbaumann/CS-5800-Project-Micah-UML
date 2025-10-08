@@ -1,12 +1,18 @@
 @startuml
 'https://plantuml.com/activity-diagram-beta
 
+|Buyer|
 start
-
 :Navigate to listings page;
+
+|System|
 :Retrieve all seller listings;
 :Display seller listing cards;
+
+|Buyer|
 :Select a chef's listing;
+
+|System|
 :Display chef's listing details;
 
 stop
