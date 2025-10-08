@@ -1,0 +1,13 @@
+@startuml
+'https://plantuml.com/sequence-diagram
+
+actor Buyer
+participant System
+
+Buyer -> System: Navigate to listings page
+System -> System: Retrieve all seller listings
+System -> Buyer: Display seller listing cards
+Buyer -> System: Select a chef's listing
+System -> Buyer: Display chef's listing details
+
+@enduml
