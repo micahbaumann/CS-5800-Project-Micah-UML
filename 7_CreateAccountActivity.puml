@@ -1,0 +1,16 @@
+@startuml
+'https://plantuml.com/activity-diagram-beta
+
+start
+:Submit username;
+:Check that username is unique;
+fork
+:Create new account for username;
+fork again
+:Generate JWT;
+end fork
+:Issue JWT and Refresh Token;
+
+stop
+
+@enduml

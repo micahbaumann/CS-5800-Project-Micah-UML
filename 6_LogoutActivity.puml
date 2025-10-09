@@ -1,0 +1,16 @@
+@startuml
+'https://plantuml.com/activity-diagram-beta
+
+start
+
+:Submit logout request;
+fork
+:Revoke JWT;
+fork again
+:Delete Refresh Token;
+end fork
+:Send success message;
+
+stop
+
+@enduml

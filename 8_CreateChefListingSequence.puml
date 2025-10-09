@@ -1,0 +1,15 @@
+@startuml
+'https://plantuml.com/sequence-diagram
+
+actor Chef
+participant System
+participant Database
+
+Chef -> System: Trigger create new Listing
+System -> Chef: Request Information on Listing
+Chef -> System: Submit details on Listing
+System -> Database: Create Listing instance for Chef
+Database -> System: Return success
+System -> Chef: Return Listing instance
+
+@enduml

@@ -1,0 +1,14 @@
+@startuml
+'https://plantuml.com/activity-diagram-beta
+
+actor User
+participant System
+participant Database
+
+User -> System: Submit username
+System -> Database: Check if username is unique
+Database -> System: Return success
+System -> User: Issue JWT
+
+
+@enduml

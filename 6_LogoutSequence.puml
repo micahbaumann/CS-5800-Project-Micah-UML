@@ -1,0 +1,11 @@
+@startuml
+'https://plantuml.com/sequence-diagram
+
+actor User
+participant System
+participant Database
+User -> System: Trigger logout action
+System -> Database: Invalidate refresh token
+System -> User: Revoke JWT
+
+@enduml

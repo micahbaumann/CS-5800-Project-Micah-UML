@@ -1,0 +1,16 @@
+@startuml
+'https://plantuml.com/activity-diagram-beta
+
+start
+:Chef triggers create new Listing;
+:Submit details regarding Listing such as price;
+fork
+:Create instance of Listing on database;
+fork again
+:Connect Listing to the Chef;
+end fork
+:Return new Listing Data;
+
+stop
+
+@enduml
