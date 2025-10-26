@@ -154,7 +154,7 @@ package com.chachef {
 
         note right of BookingController::viewBooking
           Annotated with:
-          @GetMapping("/list/chef/{bookingId}")
+          @GetMapping("/view/{bookingId}")
         end note
 
         note right of BookingController::changeStatus
@@ -212,6 +212,14 @@ package com.chachef {
             + getEnd(): LocalDateTime
             + getAddress(): String
         }
+
+        class ChangeStatusDto {
+            - bookingId: UUID [1]
+            - status: String [1]
+
+            + getBookingId(): UUID
+            + getStatus(): String
+        }
     }
 
     package service {
@@ -259,6 +267,8 @@ package com.chachef {
     UserCreateDto <.. UserService
     BookingRequestDto <.. BookingController
     BookingRequestDto <.. BookingService
+    ChangeStatusDto <.. BookingController
+    ChangeStatusDto <.. BookingService
 
     ChefService *-- ChefRepository
     ChefService *-- UserRepository
