@@ -34,8 +34,8 @@ package com.chachef {
             - bookingId: UUID [1]
             - user: User [1]
             - chef: Chef [1]
-            - start: DateTime [1]
-            - end: DateTime [1]
+            - start: LocalDateTime [1]
+            - end: LocalDateTime [1]
             - address: String [1]
             - status: String [1]
 
@@ -44,10 +44,10 @@ package com.chachef {
             + setUser(user: User): void
             + getChef(): Chef
             + setChef(Chef: Chef): void
-            + getStart(): DateTime
-            + setStart(start: DateTime): void
-            + getEnd(): DateTime
-            + setEnd(end: DateTime): void
+            + getStart(): LocalDateTime
+            + setStart(start: LocalDateTime): void
+            + getEnd(): LocalDateTime
+            + setEnd(end: LocalDateTime): void
             + getAddress(): String
             + setAddress(address: String): void
             + getStatus(): String
@@ -202,14 +202,14 @@ package com.chachef {
         class BookingRequestDto {
             - userId: UUID [1]
             - chefId: UUID [1]
-            - start: DateTime [1]
-            - end: DateTime [1]
+            - start: LocalDateTime [1]
+            - end: LocalDateTime [1]
             - address: String [1]
 
             + getUserId(): UUID
             + getChefId(): UUID
-            + getStart(): DateTime
-            + getEnd(): DateTime
+            + getStart(): LocalDateTime
+            + getEnd(): LocalDateTime
             + getAddress(): String
         }
     }
