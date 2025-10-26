@@ -264,6 +264,8 @@ package com.chachef {
     ChefService *-- UserRepository
     UserService *-- UserRepository
     BookingService *-- BookingRepository
+    BookingService *-- ChefRepository
+    BookingService *-- UserRepository
 
     InvalidUserException <.. ChefService
     UsernameTakenException <.. UserService
