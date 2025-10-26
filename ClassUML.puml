@@ -79,7 +79,7 @@ package com.chachef {
         class ChefController {
             - chefService: ChefService [1]
 
-            + addChef(chefCreateDto: ChefCreateDto): ResponseEntity<Void>
+            + addChef(chefCreateDto: ChefCreateDto): ResponseEntity<Chef>
             + getChef(): ResponseEntity<List<Chef>>
             + getChefProfile(id: UUID): ResponseEntity<Chef>
         }
@@ -107,7 +107,7 @@ package com.chachef {
         class UserController {
             - userService: UserService [1]
 
-            + addUser(userCreateDto: UserCreateDto): ResponseEntity<Void>
+            + addUser(userCreateDto: UserCreateDto): ResponseEntity<User>
             + getUser(): ResponseEntity<List<User>>
         }
 
@@ -129,7 +129,7 @@ package com.chachef {
         class BookingController {
             - bookingService: BookingService [1]
 
-            + bookingRequest(bookingRequestDto: BookingRequestDto): ResponseEntity<Void>
+            + bookingRequest(bookingRequestDto: BookingRequestDto): ResponseEntity<Booking>
             + viewBookingsUser(userId: UUID): ResponseEntity<List<Booking>>
             + viewBookingsChef(chefId: UUID): ResponseEntity<List<Booking>>
             + viewBooking(bookingId: UUID): ResponseEntity<Booking>
@@ -225,7 +225,7 @@ package com.chachef {
             - chefRepository: ChefRepository
             - userRepository: UserRepository
 
-            + createChef(chefCreateDto: ChefCreateDto): void
+            + createChef(chefCreateDto: ChefCreateDto): Chef
             + getChef(): List<Chef>
             + getChefProfile(id: UUID): Chef
         }
@@ -233,14 +233,14 @@ package com.chachef {
         class UserService {
             - userRepository: UserRepository
 
-            + createUser(userCreateDto: UserCreateDto): void
+            + createUser(userCreateDto: UserCreateDto): User
             + getAllUsers(): List<User>
         }
 
         class BookingService {
             - bookingRepository: BookingRepository
 
-            + bookingRequest(bookingRequestDto: BookingRequestDto): void
+            + bookingRequest(bookingRequestDto: BookingRequestDto): Booking
             + viewBookingsUser(userId: UUID): List<Booking>
             + viewBookingsChef(chefId: UUID): List<Booking>
             + viewBooking(bookingId: UUID): Booking
