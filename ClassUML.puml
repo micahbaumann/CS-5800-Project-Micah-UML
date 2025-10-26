@@ -1,166 +1,277 @@
 @startuml
 'https://plantuml.com/class-diagram
 
-package com.micahbaumann {
-    package database {
-        class DatabaseBase {
-            - user: String[1]
-            - password: String[1]
-
-            + query(in query: String): void
-        }
-    }
-
-    package users {
+package com.chachef {
+    package entity {
         class User {
-            - name: String[1]
-            - userID: String[1]
+            - userId: UUID [1]
+            - username: String [1]
+            - name: String [1]
 
+            + getUserId(): UUID
+            + getUsername(): String
+            + setUsername(username: String): void
             + getName(): String
-            + setName(in name: String): void
-            + getID(): String
-            + setUserFromDB(in username: String): void
-            + updateDBFromUser(): void
+            + setName(name: String): void
         }
 
         class Chef {
-            - price: double[1]
-            - bookings: Booking [*]
+            - chefId: UUID [1]
+            - user: User [1]
+            - price: double [1]
+            - displayName: String [1]
 
-            + getPrice(): Double
-            + setPrice(in price: double): void
-        }
-
-        User <|-- Chef
-    }
-
-    package bookings {
-        enum BookingStatus {
-            CONFIRMED
-            PENDING
-            DENIED
+            + getChefId(): UUID
+            + getUser(): User
+            + setUser(user: User): void
+            + getPrice(): double
+            + setPrice(price: double): void
+            + getDisplayName(): String
+            + setDisplayName(displayName: String): void
         }
 
         class Booking {
-            - start: Datetime [1]
-            - end: Datetime [1]
-            - bookingID: String [1]
-            - status: BookingStatus
+            - bookingId: UUID [1]
+            - user: User [1]
+            - chef: Chef [1]
+            - start: DateTime [1]
+            - end: DateTime [1]
+            - address: String [1]
+            - status: String [1]
 
-            + getStart(): Datetime
-            + setStart(in start: Datetime): void
-            + getEnd(): Datetime
-            + setEnd(in end: Datetime): void
-            + getID(): String
-            + setBookingFromDB(in bookingID: String): void
-            + updateDBFromBooking(): void
+            + getBookingId(): UUID
+            + getUser(): User
+            + setUser(user: User): void
+            + getChef(): Chef
+            + setChef(Chef: Chef): void
+            + getStart(): DateTime
+            + setStart(start: DateTime): void
+            + getEnd(): DateTime
+            + setEnd(end: DateTime): void
+            + getAddress(): String
+            + setAddress(address: String): void
+            + getStatus(): String
+            + setStatus(status: String): void
         }
 
-        Booking ..> BookingStatus
-    }
-    Chef *-- Booking
-
-    package endpoints {
-        class BaseController {
-            + login(body: LoginBody): void
-            + listChefs(): ArrayList<Chef>
-            + createAccount(body: CreateAccountBody): void
-            + createChef(body: CreateChefBody): void
-            + viewChef(): Chef
-            + createBooking(body: CreateBookingBody): void
-            + viewBookings(): ArrayList<Booking>
-            + updateBooking(body: UpdateBookingBody): void
-            + refresh(): String
-        }
-
-        note right of BaseController::login
-          Annotated with:
-          @PostMapping("/api/account/login")
-        end note
-
-        note right of BaseController::listChefs
-          Annotated with:
-          @GetMapping("/api/chef/list")
-        end note
-
-        note right of BaseController::createAccount
-          Annotated with:
-          @PostMapping("/api/account/create")
-        end note
-
-        note right of BaseController::createChef
-          Annotated with:
-          @PostMapping("/api/chef/create")
-        end note
-
-        note left of BaseController::viewChef
-          Annotated with:
-          @GetMapping("/api/chef/view/{id}")
-        end note
-
-        note right of BaseController::createBooking
-          Annotated with:
-          @PostMapping("/api/booking/create")
-        end note
-
-        note left of BaseController::viewBookings
-          Annotated with:
-          @GetMapping("/api/booking/view")
-        end note
-
-        note right of BaseController::updateBooking
-          Annotated with:
-          @PutMapping("/api/booking/update/{id}")
-        end note
-
-        note left of BaseController::refresh
-          Annotated with:
-          @GetMapping("/api/token/refresh")
-        end note
-
-        package data_models {
-            class LoginBody {
-                + username: String [1]
-                + password: String [1]
-            }
-
-            class CreateAccountBody {
-                + username: String [1]
-                + password: String [1]
-            }
-
-            class CreateChefBody {
-                + userID: String [1]
-                + price: double [1]
-            }
-
-            class CreateBookingBody {
-                + start: Datetime [1]
-                + end: Datetime [1]
-            }
-
-            class UpdateBookingBody {
-                + start: Datetime [1]
-                + end: Datetime [1]
-                + status: String [1]
-            }
-        }
-
-        LoginBody <.. BaseController
-        Chef <.. BaseController
-        CreateAccountBody <.. BaseController
-        CreateChefBody <.. BaseController
-        CreateBookingBody <.. BaseController
-        UpdateBookingBody <.. BaseController
+        Chef *.. User
+        Booking *.. User
+        Booking *.. Chef
     }
 
-    BaseController ..> User
-    BaseController ..> Chef
-    BaseController ..> DatabaseBase
-    User ..> DatabaseBase
-    Chef ..> DatabaseBase
-    BaseController ..> Booking
-    BaseController ..> BookingStatus
+    package repository {
+        interface ChefRepository {
+
+        }
+
+        interface UserRepository {
+            + findByUsername(username: String): Optional<User>
+            + existsByUsername(username: String): boolean
+            + findByUserId(userId: UUID): Optional<User>
+        }
+
+        interface BookingRepository {
+
+        }
+    }
+
+    package controller {
+        class ChefController {
+            - chefService: ChefService [1]
+
+            + addChef(chefCreateDto: ChefCreateDto): ResponseEntity<Void>
+            + getChef(): ResponseEntity<List<Chef>>
+            + getChefProfile(id: UUID): ResponseEntity<Chef>
+        }
+
+        note right of ChefController::addChef
+          Annotated with:
+          @PostMapping("/create")
+        end note
+
+        note right of ChefController::getChef
+          Annotated with:
+          @GetMapping("/list")
+        end note
+
+        note right of ChefController::getChefProfile
+          Annotated with:
+          @GetMapping("/profile/{id}")
+        end note
+
+        note left of ChefController
+          Annotated with:
+          @PostMapping("/chef")
+        end note
+
+        class UserController {
+            - userService: UserService [1]
+
+            + addUser(userCreateDto: UserCreateDto): ResponseEntity<Void>
+            + getUser(): ResponseEntity<List<User>>
+        }
+
+        note right of UserController::addUser
+          Annotated with:
+          @PostMapping("/create")
+        end note
+
+        note right of UserController::getUser
+          Annotated with:
+          @GetMapping("/list")
+        end note
+
+        note left of UserController
+          Annotated with:
+          @PostMapping("/user")
+        end note
+
+        class BookingController {
+            - bookingService: BookingService [1]
+
+            + bookingRequest(bookingRequestDto: BookingRequestDto): ResponseEntity<Void>
+            + viewBookingsUser(userId: UUID): ResponseEntity<List<Booking>>
+            + viewBookingsChef(chefId: UUID): ResponseEntity<List<Booking>>
+            + viewBooking(bookingId: UUID): ResponseEntity<Booking>
+            + changeStatus(changeStatusDto: ChangeStatusDto): ResponseEntity<Void>
+            + deleteBooking(bookingId: UUID): ResponseEntity<Void>
+        }
+
+        note right of BookingController::bookingRequest
+          Annotated with:
+          @PostMapping("/create")
+        end note
+
+        note right of BookingController::viewBookingsUser
+          Annotated with:
+          @GetMapping("/list/user/{userId}")
+        end note
+
+        note right of BookingController::viewBookingsChef
+          Annotated with:
+          @GetMapping("/list/chef/{chefId}")
+        end note
+
+        note right of BookingController::viewBooking
+          Annotated with:
+          @GetMapping("/list/chef/{bookingId}")
+        end note
+
+        note right of BookingController::changeStatus
+          Annotated with:
+          @PutMapping("/update-status")
+        end note
+
+        note right of BookingController::deleteBooking
+          Annotated with:
+          @DeleteMapping("/delete")
+        end note
+
+        note left of BookingController
+          Annotated with:
+          @PostMapping("/booking")
+        end note
+
+        class GlobalExceptionHandler {
+            + handleUsernameTakenException(ex: UsernameTakenException): ProblemDetail
+            + handleInvalidUserException(ex: InvalidUserException): ProblemDetail
+            + handleMethodArgumentNotValidException(ex: MethodArgumentNotValidException): ResponseEntity<Map<String, Object>>
+        }
+
+    }
+
+    package dto {
+        class ChefCreateDto {
+            - user: UUID [1]
+            - price: double [1]
+            - listingName: String [1]
+
+            + getUser(): UUID
+            + getPrice(): double
+            + getListingName(): String
+        }
+
+        class UserCreateDto {
+            - username: String [1]
+            - name: String [1]
+
+            + getUsername(): String
+            + getName(): String
+        }
+
+        class BookingRequestDto {
+            - userId: UUID [1]
+            - chefId: UUID [1]
+            - start: DateTime [1]
+            - end: DateTime [1]
+            - address: String [1]
+
+            + getUserId(): UUID
+            + getChefId(): UUID
+            + getStart(): DateTime
+            + getEnd(): DateTime
+            + getAddress(): String
+        }
+    }
+
+    package service {
+        package exceptions {
+            class InvalidUserException {}
+
+            class UsernameTakenException {}
+        }
+
+        class ChefService {
+            - chefRepository: ChefRepository
+            - userRepository: UserRepository
+
+            + createChef(chefCreateDto: ChefCreateDto): void
+            + getChef(): List<Chef>
+            + getChefProfile(id: UUID): Chef
+        }
+
+        class UserService {
+            - userRepository: UserRepository
+
+            + createUser(userCreateDto: UserCreateDto): void
+            + getAllUsers(): List<User>
+        }
+
+        class BookingService {
+            - bookingRepository: BookingRepository
+
+            + bookingRequest(bookingRequestDto: BookingRequestDto): void
+            + viewBookingsUser(userId: UUID): List<Booking>
+            + viewBookingsChef(chefId: UUID): List<Booking>
+            + viewBooking(bookingId: UUID): Booking
+            + changeStatus(changeStatusDto: ChangeStatusDto): void
+            + deleteBooking(bookingId: UUID): void
+        }
+    }
+
+    class Application {
+        main(args: String[*]): void
+    }
+
+    ChefCreateDto <.. ChefController
+    ChefCreateDto <.. ChefService
+    UserCreateDto <.. UserController
+    UserCreateDto <.. UserService
+    BookingRequestDto <.. BookingController
+    BookingRequestDto <.. BookingService
+
+    ChefService *-- ChefRepository
+    ChefService *-- UserRepository
+    UserService *-- UserRepository
+    BookingService *-- BookingRepository
+    BookingService *-- ChefRepository
+    BookingService *-- UserRepository
+
+    InvalidUserException <.. ChefService
+    UsernameTakenException <.. UserService
+    InvalidUserException <.. GlobalExceptionHandler
+    UsernameTakenException <.. GlobalExceptionHandler
+
 
 }
 
