@@ -1,5 +1,6 @@
 @startuml
 'https://plantuml.com/activity-diagram-beta
+title Check Bookings Activity Diagram
 
 |Buyer|
 start

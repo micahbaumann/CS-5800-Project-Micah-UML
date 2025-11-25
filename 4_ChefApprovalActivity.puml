@@ -1,5 +1,6 @@
 @startuml
 'https://plantuml.com/activity-diagram-beta
+title Chef Approval Activity Diagram
 
 |Seller|
 start

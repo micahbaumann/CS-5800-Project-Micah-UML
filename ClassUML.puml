@@ -1,5 +1,14 @@
 @startuml
 'https://plantuml.com/class-diagram
+title Class Diagram
+
+package org.springframework.boot {
+    class SpringApplication {}
+    note right of SpringApplication
+      Spring Boot Framework
+      Not part of application, but is called in main and calls all controllers.
+    end note
+}
 
 package com.chachef {
     package entity {
@@ -282,7 +291,11 @@ package com.chachef {
     InvalidUserException <.. GlobalExceptionHandler
     UsernameTakenException <.. GlobalExceptionHandler
 
-
+    Application ..> SpringApplication
+    SpringApplication ..> BookingController
+    SpringApplication ..> GlobalExceptionHandler
+    SpringApplication ..> UserController
+    SpringApplication ..> ChefController
 }
 
 @enduml
