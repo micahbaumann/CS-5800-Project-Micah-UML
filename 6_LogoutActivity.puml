@@ -1,5 +1,6 @@
 @startuml
 'https://plantuml.com/activity-diagram-beta
+title Logout Activity Diagram
 
 start
 

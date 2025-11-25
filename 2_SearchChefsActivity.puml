@@ -1,5 +1,6 @@
 @startuml
 'https://plantuml.com/activity-diagram-beta
+title Search Chefs Activity Diagram
 
 |Buyer|
 start

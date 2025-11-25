@@ -1,5 +1,6 @@
 @startuml
 'https://plantuml.com/sequence-diagram
+title Search Chefs Sequence Diagram
 
 actor Buyer
 participant System

@@ -1,5 +1,6 @@
 @startuml
 'https://plantuml.com/sequence-diagram
+title Check Bookings Sequence Diagram
 
 actor Buyer
 participant System
