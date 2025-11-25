@@ -164,7 +164,7 @@ package com.chachef {
 
         note right of BookingController::deleteBooking
           Annotated with:
-          @DeleteMapping("/delete")
+          @DeleteMapping("/delete/{bookingId}")
         end note
 
         note left of BookingController
