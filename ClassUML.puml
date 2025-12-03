@@ -110,7 +110,7 @@ package com.chachef {
 
         note left of ChefController
           Annotated with:
-          @PostMapping("/chef")
+          @RequestMapping("/chef")
         end note
 
         class UserController {
@@ -132,7 +132,7 @@ package com.chachef {
 
         note left of UserController
           Annotated with:
-          @PostMapping("/user")
+          @RequestMapping("/user")
         end note
 
         class BookingController {
@@ -178,7 +178,43 @@ package com.chachef {
 
         note left of BookingController
           Annotated with:
-          @PostMapping("/booking")
+          @RequestMapping("/booking")
+        end note
+
+
+
+
+        'FINISH AUTH CONTROLLER
+
+
+
+
+        class AuthController {
+            - authService: AuthService [1]
+
+            + login(loginDto: LoginDto): ResponseEntity<JWT>
+            + logout(authContext: AuthContext): ResponseEntity<Void>
+            + refresh(refreshToken: String): ResponseEntity<JWT>
+        }
+
+        note right of AuthController::login
+          Annotated with:
+          @PostMapping("/login")
+        end note
+
+        note right of AuthController::logout
+          Annotated with:
+          @PostMapping("/logout")
+        end note
+
+        note right of AuthController::refresh
+          Annotated with:
+          @PostMapping("/refresh")
+        end note
+
+        note left of AuthController
+          Annotated with:
+          @RequestMapping("/auth")
         end note
 
         class GlobalExceptionHandler {
@@ -296,6 +332,7 @@ package com.chachef {
     SpringApplication ..> GlobalExceptionHandler
     SpringApplication ..> UserController
     SpringApplication ..> ChefController
+    SpringApplication ..> AuthController
 }
 
 @enduml
