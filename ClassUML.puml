@@ -47,6 +47,7 @@ package com.chachef {
             - name: String [1]
             - passwordHash: String [1]
 
+            + setUserId(userId: UUID): void
             + getUserId(): UUID
             + getUsername(): String
             + setUsername(username: String): void
@@ -55,6 +56,10 @@ package com.chachef {
             + getPasswordHash(): String
             + setPasswordHash(passwordHash: String): void
         }
+
+        note right of User::setUserId
+            Used only for testing. The DB generates the id
+        end note
 
         class Chef {
             - chefId: UUID [1]
@@ -131,6 +136,7 @@ package com.chachef {
             - chef: Chef [0-1]
             - role: String [1]
 
+            + setMessageAccountId(messageAccountId: UUID): void
             + getMessageAccountId(): UUID
             + getUser(): User
             + setUser(user: User): void
@@ -139,6 +145,10 @@ package com.chachef {
             + getRole(): String
             + setRole(role: String): void
         }
+
+        note right of MessageAccount::setMessageAccountId
+            Used only for testing. The DB generates the id
+        end note
     }
 
     package repository {
