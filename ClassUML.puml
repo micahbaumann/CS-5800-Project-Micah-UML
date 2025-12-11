@@ -107,10 +107,38 @@ package com.chachef {
             + setUser(user: User): void
         }
 
-'        Chef *.. User
-'        Booking *.. User
-'        Booking *.. Chef
-'        RefreshTokens *.. User
+        class Message {
+            - messageId: UUID [1]
+            - fromAccount: MessageAccount [1]
+            - toAccount: MessageAccount [1]
+            - content: String [1]
+            - timestamp: LocalDateTime [1]
+
+            # onCreate(): void
+            + getMessageId(): UUID
+            + getFromAccount(): MessageAccount
+            + setFromAccount(fromAccount: MessageAccount): void
+            + getToAccount(): MessageAccount
+            + setToAccount(toAccount: MessageAccount): void
+            + getContent(): String
+            + setContent(content String): void
+            + getTimestamp(): LocalDateTime
+        }
+
+        class MessageAccount {
+            - messageAccountId: UUID [1]
+            - user: User [0-1]
+            - chef: Chef [0-1]
+            - role: String [1]
+
+            + getMessageAccountId(): UUID
+            + getUser(): User
+            + setUser(user: User): void
+            + getChef(): Chef
+            + setChef(chef: Chef): void
+            + getRole(): String
+            + setRole(role: String): void
+        }
     }
 
     package repository {
@@ -137,6 +165,18 @@ package com.chachef {
             + deleteRefreshTokensByRefreshId(refreshTokenId: UUID): void
             + deleteRefreshTokensByUser_UserId(user_UserId: UUID): void
             + findRefreshTokensByRefreshId(refreshId: UUID): Optional<RefreshTokens>
+        }
+
+        interface MessageAccountRepository {
+            + findByUser_UserId(user_UserId: UUID): Optional<MessageAccount>
+            + findByChef_ChefId(chef_ChefId: UUID): Optional<MessageAccount>
+            + findMessageAccountByMessageAccountId(messageAccountId: UUID): Optional<MessageAccount>
+        }
+
+        interface MessageRepository {
+            + findMessageByMessageId(messageId: UUID): Optional<Message>
+            + findByToAccount_MessageAccountId(messageAccountId: UUID): Optional<List<Message>>
+            + findByFromAccount_MessageAccountId(messageAccountId: UUID): Optional<List<Message>>
         }
     }
 
@@ -286,12 +326,66 @@ package com.chachef {
           @RequestMapping("/auth")
         end note
 
+        class MessageController {
+            - messageService: MessageService [1]
+
+            + sendMessage(authContext: AuthContext, messageSendDto: MessageSendDto): ResponseEntity<Void>
+            + listUserMessages(authContext: AuthContext): ResponseEntity<Map<String, List<MessageReturnDto>>>
+            + listChefMessages(authContext: AuthContext, chefId: UUID): ResponseEntity<Map<String, List<MessageReturnDto>>>
+            + viewMessage(authContext: AuthContext, messageId: UUID): ResponseEntity<MessageReturnDto>
+            + userMessageAccount(authContext: AuthContext): ResponseEntity<Map<String, String>>
+            + chefMessageAccount(authContext: AuthContext, chefId: UUID): ResponseEntity<Map<String, String>>
+        }
+
+        note right of MessageController::sendMessage
+          Annotated with:
+          @RequireAuth
+          @PostMapping("/send")
+        end note
+
+        note right of MessageController::listUserMessages
+          Annotated with:
+          @RequireAuth
+          @GetMapping("/list/user")
+        end note
+
+        note right of MessageController::listChefMessages
+          Annotated with:
+          @RequireAuth
+          @GetMapping("/list/chef/{chefId}")
+        end note
+
+        note right of MessageController::viewMessage
+          Annotated with:
+          @RequireAuth
+          @GetMapping("/view/{messageId}")
+        end note
+
+        note right of MessageController::userMessageAccount
+          Annotated with:
+          @RequireAuth
+          @GetMapping("/user/message-account")
+        end note
+
+        note right of MessageController::chefMessageAccount
+          Annotated with:
+          @RequireAuth
+          @GetMapping("/chef/{chefId}/message-account")
+        end note
+
+        note left of MessageController
+          Annotated with:
+          @RequestMapping("/message")
+        end note
+
         class GlobalExceptionHandler {
             + handleUsernameTakenException(ex: UsernameTakenException): ProblemDetail
             + handleInvalidUserException(ex: InvalidUserException): ProblemDetail
             + handleInvalidBookingException(ex: InvalidBookingException): ProblemDetail
             + handleMethodArgumentNotValidException(ex: MethodArgumentNotValidException): ResponseEntity<Map<String, Object>>
             + handleUnauthorizedUserException(ex: UnauthorizedUser): ProblemDetail
+            + handleInternalAppErrorException(ex: InternalAppError): ProblemDetail
+            + handleInvalidMessageException(ex: InvalidMessageException): ProblemDetail
         }
 
         class WebConfig {
@@ -369,6 +463,8 @@ package com.chachef {
             class InvalidUserException {}
             class UnauthorizedUser {}
             class UsernameTakenException {}
+            class InternalAppError {}
+            class InvalidMessageException {}
         }
 
         class ChefService {
@@ -428,6 +524,22 @@ package com.chachef {
             + getRefreshJit(token: String): String
             - getClaimsFromToken(token: String, key: Key): Claims
         }
+
+        class MessageService {
+            - messageAccountRepository: MessageAccountRepository [1]
+            - messageRepository: MessageRepository [1]
+            - user: UserRepository [1]
+            - chef: ChefRepository [1]
+
+            + sendMessage(authContext: AuthContext, messageSendDto: MessageSendDto): void
+            + listUserMessages(authContext: AuthContext): Map<String, List<MessageReturnDto>>
+            + listChefMessages(authContext: AuthContext, chefId: UUID): Map<String, List<MessageReturnDto>>
+            + viewMessage(authContext: AuthContext, messageId: UUID): MessageReturnDto
+            + getCreateMessageAccount(authContext: AuthContext, chefId UUID): MessageAccount
+            + getCreateMessageAccount(authContext: AuthContext): MessageAccount
+            - createMessageAccountIfNotExist(userChefId: UUID, type: String): MessageAccount
+            - getMessagesFromMessageAccount(messageAccount: MessageAccount): Map<String, List<MessageReturnDto>>
+        }
     }
 
     package dataobjects {
@@ -483,6 +595,9 @@ package com.chachef {
     Booking *-- User
     Booking *-- Chef
     RefreshTokens *-- User
+    MessageAccount *-- User
+    MessageAccount *-- Chef
+    Message *-- MessageAccount
 
     WebConfig *-- AuthRequiredInterceptor
 
@@ -493,6 +608,7 @@ package com.chachef {
     UserController o-- UserService
     ChefController o-- ChefService
     AuthService o-- JwtService
+    MessageController o-- MessageService
 
     ChefService o-- ChefRepository
     ChefService o-- UserRepository
@@ -502,6 +618,10 @@ package com.chachef {
     BookingService o-- BookingRepository
     AuthService o-- UserRepository
     AuthService o-- RefreshTokensRepository
+    MessageService o-- MessageAccountRepository
+    MessageService o-- MessageRepository
+    MessageService o-- UserRepository
+    MessageService o-- ChefRepository
 
 
     OncePerRequestFilter <|-- AuthFilter
@@ -513,6 +633,8 @@ package com.chachef {
     JpaRepository <|-- ChefRepository
     JpaRepository <|-- RefreshTokensRepository
     JpaRepository <|-- UserRepository
+    JpaRepository <|-- MessageAccountRepository
+    JpaRepository <|-- MessageRepository
 
 
     SpringApplication <.. Application
@@ -523,6 +645,7 @@ package com.chachef {
     RequireAuth <.. BookingController
     RequireAuth <.. ChefController
     RequireAuth <.. UserController
+    RequireAuth <.. MessageController
 
 
     LoginDto <.. AuthController
@@ -536,9 +659,15 @@ package com.chachef {
     ChefCreateDto <.. ChefController
     ChefCreateDto <.. ChefService
 
-    UserCreateDto <.. UserRepository
+    UserCreateDto <.. UserController
     UserCreateDto <.. UserService
-    UserReturnDto <.. UserRepository
+    UserReturnDto <.. UserController
+
+    MessageSendDto <.. MessageController
+    MessageSendDto <.. MessageService
+
+    MessageReturnDto <.. MessageController
+    MessageReturnDto <.. MessageService
 
 
     AuthContext <.. AuthFilter
@@ -548,10 +677,12 @@ package com.chachef {
     AuthContext <.. BookingController
     AuthContext <.. ChefController
     AuthContext <.. UserController
+    AuthContext <.. MessageController
 
     AuthContext <.. AuthService
     AuthContext <.. BookingService
     AuthContext <.. ChefService
+    AuthContext <.. MessageService
 
     ApplicationJwtBuilder <.. ApplicationJwtBuilder
     ApplicationJwtBuilder <.. JwtService
@@ -569,6 +700,8 @@ package com.chachef {
     Chef <.. BookingService
     Chef <.. ChefService
     Chef <.. ChefRepository
+    Chef <.. MessageService
+    Chef <.. MessageAccount
 
     RefreshTokens <.. JwtService
     RefreshTokens <.. RefreshTokensRepository
@@ -581,12 +714,17 @@ package com.chachef {
     User <.. UserController
     User <.. UserRepository
     User <.. AuthService
+    User <.. MessageService
+    User <.. MessageAccount
+
+    Message <.. MessageService
+    Message <.. MessageRepository
 
 
     BookingRepository <.. BookingService
 
     ChefRepository <.. BookingService
-    ChefRepository <.. ChefService
+    ChefRepository <.. MessageService
 
     RefreshTokensRepository <.. AuthService
     RefreshTokensRepository <.. JwtService
@@ -595,7 +733,7 @@ package com.chachef {
     UserRepository <.. BookingService
     UserRepository <.. ChefService
     UserRepository <.. JwtService
-    UserRepository <.. UserService
+    UserRepository <.. MessageService
 
 
     InvalidBookingException <.. GlobalExceptionHandler
@@ -606,78 +744,22 @@ package com.chachef {
     InvalidUserException <.. ChefService
     InvalidUserException <.. JwtService
     InvalidUserException <.. UserService
+    InvalidUserException <.. MessageService
+    InvalidUserException <.. MessageController
 
     UnauthorizedUser <.. GlobalExceptionHandler
     UnauthorizedUser <.. AuthService
     UnauthorizedUser <.. BookingService
+    UnauthorizedUser <.. MessageService
 
     UsernameTakenException <.. GlobalExceptionHandler
     UsernameTakenException <.. UserService
 
+    InternalAppError <.. GlobalExceptionHandler
+    InternalAppError <.. MessageService
+    InternalAppError <.. MessageController
 
-    AuthService <.. AuthController
-    BookingService <.. BookingController
-    ChefService <.. ChefController
-    JwtService <.. AuthService
-    JwtService <.. AuthFilter
-    UserService <.. UserController
-
-
-'    User <.. UserController
-'    User <.. BookingService
-'    User <.. UserService
-'    User <.. UserRepository
-'    User <.. AuthService
-
-
-
-'    ChefCreateDto <.. ChefController
-'    ChefCreateDto <.. ChefService
-'    UserCreateDto <.. UserController
-'    UserCreateDto <.. UserService
-'    BookingRequestDto <.. BookingController
-'    BookingRequestDto <.. BookingService
-'    ChangeStatusDto <.. BookingController
-'    ChangeStatusDto <.. BookingService
-'    LoginDto <.. AuthController
-'    LoginDto <.. AuthService
-'    UserReturnDto <.. UserController
-'
-'    ChefService *-- ChefRepository
-'    ChefService *-- UserRepository
-'    UserService *-- UserRepository
-'    BookingService *-- BookingRepository
-'    BookingService *-- ChefRepository
-'    BookingService *-- UserRepository
-'    AuthService *-- UserRepository
-'    JwtService *-- AuthFilter
-'
-'    InvalidUserException <.. ChefService
-'    UsernameTakenException <.. UserService
-'    InvalidUserException <.. GlobalExceptionHandler
-'    UsernameTakenException <.. GlobalExceptionHandler
-'
-'    Application ..> SpringApplication
-'    SpringApplication ..> BookingController
-'    SpringApplication ..> GlobalExceptionHandler
-'    SpringApplication ..> UserController
-'    SpringApplication ..> ChefController
-'    SpringApplication ..> AuthController
-'
-'    ApplicationJwtBuilder <.. JwtService
-'    AuthContext <.. AuthService
-'    AuthContext <.. AuthController
-'
-'    OncePerRequestFilter <|-- AuthFilter
-'
-'    HandlerInterceptor <.. AuthRequiredInterceptor
-
-
-
-    'Figure out requireauth connection
-
-
-
+    InvalidMessageException <.. GlobalExceptionHandler
 
 }
 
