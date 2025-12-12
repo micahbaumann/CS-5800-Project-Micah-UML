@@ -343,8 +343,8 @@ package com.chachef {
             + listUserMessages(authContext: AuthContext): ResponseEntity<Map<String, List<MessageReturnDto>>>
             + listChefMessages(authContext: AuthContext, chefId: UUID): ResponseEntity<Map<String, List<MessageReturnDto>>>
             + viewMessage(authContext: AuthContext, messageId: UUID): ResponseEntity<MessageReturnDto>
-            + userMessageAccount(authContext: AuthContext): ResponseEntity<Map<String, String>>
-            + chefMessageAccount(authContext: AuthContext, chefId: UUID): ResponseEntity<Map<String, String>>
+            + userMessageAccount(userId: UUID): ResponseEntity<Map<String, String>>
+            + chefMessageAccount(chefId: UUID): ResponseEntity<Map<String, String>>
         }
 
         note right of MessageController::sendMessage
@@ -373,13 +373,11 @@ package com.chachef {
 
         note right of MessageController::userMessageAccount
           Annotated with:
-          @RequireAuth
-          @GetMapping("/user/message-account")
+          @GetMapping("/user/{userId}/message-account")
         end note
 
         note right of MessageController::chefMessageAccount
           Annotated with:
-          @RequireAuth
           @GetMapping("/chef/{chefId}/message-account")
         end note
 
@@ -545,8 +543,8 @@ package com.chachef {
             + listUserMessages(authContext: AuthContext): Map<String, List<MessageReturnDto>>
             + listChefMessages(authContext: AuthContext, chefId: UUID): Map<String, List<MessageReturnDto>>
             + viewMessage(authContext: AuthContext, messageId: UUID): MessageReturnDto
-            + getCreateMessageAccount(authContext: AuthContext, chefId UUID): MessageAccount
-            + getCreateMessageAccount(authContext: AuthContext): MessageAccount
+            + getCreateMessageAccount(chefId UUID): MessageAccount
+            + getCreateMessageAccount(chefId: UUID): MessageAccount
             - createMessageAccountIfNotExist(userChefId: UUID, type: String): MessageAccount
             - getMessagesFromMessageAccount(messageAccount: MessageAccount): Map<String, List<MessageReturnDto>>
         }
