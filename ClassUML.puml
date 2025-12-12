@@ -2,13 +2,42 @@
 'https://plantuml.com/class-diagram
 title Class Diagram
 
-package org.springframework.boot {
-    class SpringApplication {}
-    note right of SpringApplication
-      Spring Boot Framework
-      Not part of application, but is called in main and calls all controllers.
-    end note
+package org.springframework {
+    package boot {
+        class SpringApplication {}
+    }
+
+    package web {
+        package filter {
+            class OncePerRequestFilter {}
+        }
+
+
+        package servlet {
+            interface HandlerInterceptor {}
+
+            package config {
+                package annotation {
+                    interface WebMvcConfigurer {}
+                      interface WebMvcConfigurer {}
+                }
+            }
+        }
+    }
+
+    package data {
+        package jpa {
+            package repository {
+                class JpaRepository {}
+            }
+        }
+    }
 }
+
+note right of org.springframework
+  Spring Boot Framework
+  Not part of application, but is called several times.
+end note
 
 package com.chachef {
     package entity {
@@ -16,27 +45,35 @@ package com.chachef {
             - userId: UUID [1]
             - username: String [1]
             - name: String [1]
+            - passwordHash: String [1]
 
+            + setUserId(userId: UUID): void
             + getUserId(): UUID
             + getUsername(): String
             + setUsername(username: String): void
             + getName(): String
             + setName(name: String): void
+            + getPasswordHash(): String
+            + setPasswordHash(passwordHash: String): void
         }
+
+        note right of User::setUserId
+            Used only for testing. The DB generates the id
+        end note
 
         class Chef {
             - chefId: UUID [1]
             - user: User [1]
             - price: double [1]
-            - displayName: String [1]
+            - listingName: String [1]
 
             + getChefId(): UUID
             + getUser(): User
             + setUser(user: User): void
             + getPrice(): double
             + setPrice(price: double): void
-            + getDisplayName(): String
-            + setDisplayName(displayName: String): void
+            + getListingName(): String
+            + setListingName(listingName: String): void
         }
 
         class Booking {
@@ -63,14 +100,61 @@ package com.chachef {
             + setStatus(status: String): void
         }
 
-        Chef *.. User
-        Booking *.. User
-        Booking *.. Chef
+        class RefreshTokens {
+            - refreshId: UUID [1]
+            - user: User [1]
+            - expires: LocalDateTime [1]
+
+            + getRefreshId(): UUID
+            + getExpires(): LocalDateTime
+            + setExpires(expires: LocalDateTime): void
+            + getUser(): User
+            + setUser(user: User): void
+        }
+
+        class Message {
+            - messageId: UUID [1]
+            - fromAccount: MessageAccount [1]
+            - toAccount: MessageAccount [1]
+            - content: String [1]
+            - timestamp: LocalDateTime [1]
+
+            # onCreate(): void
+            + getMessageId(): UUID
+            + getFromAccount(): MessageAccount
+            + setFromAccount(fromAccount: MessageAccount): void
+            + getToAccount(): MessageAccount
+            + setToAccount(toAccount: MessageAccount): void
+            + getContent(): String
+            + setContent(content String): void
+            + getTimestamp(): LocalDateTime
+        }
+
+        class MessageAccount {
+            - messageAccountId: UUID [1]
+            - user: User [0-1]
+            - chef: Chef [0-1]
+            - role: String [1]
+
+            + setMessageAccountId(messageAccountId: UUID): void
+            + getMessageAccountId(): UUID
+            + getUser(): User
+            + setUser(user: User): void
+            + getChef(): Chef
+            + setChef(chef: Chef): void
+            + getRole(): String
+            + setRole(role: String): void
+        }
+
+        note right of MessageAccount::setMessageAccountId
+            Used only for testing. The DB generates the id
+        end note
     }
 
     package repository {
         interface ChefRepository {
-
+            + findByChefId(chefId: UUID): Optional<Chef>
+            + findChefsFyUser_UserId(userUserId: UUID): Optional<List<Chef>>
         }
 
         interface UserRepository {
@@ -80,7 +164,29 @@ package com.chachef {
         }
 
         interface BookingRepository {
+            + findByUser_UserId(userId: UUID): Optional<List<Booking>>
+            + findByChef_ChefId(chefId: UUID): Optional<List<Booking>>
+            + findByBookingId(bookingId: UUID): Optional<Booking>
+            + deleteByBookingId(bookingId: UUID): void
+        }
 
+        interface RefreshTokensRepository {
+            + deleteByExpiresBefore(time: LocalDateTime): void
+            + deleteRefreshTokensByRefreshId(refreshTokenId: UUID): void
+            + deleteRefreshTokensByUser_UserId(user_UserId: UUID): void
+            + findRefreshTokensByRefreshId(refreshId: UUID): Optional<RefreshTokens>
+        }
+
+        interface MessageAccountRepository {
+            + findByUser_UserId(user_UserId: UUID): Optional<MessageAccount>
+            + findByChef_ChefId(chef_ChefId: UUID): Optional<MessageAccount>
+            + findMessageAccountByMessageAccountId(messageAccountId: UUID): Optional<MessageAccount>
+        }
+
+        interface MessageRepository {
+            + findMessageByMessageId(messageId: UUID): Optional<Message>
+            + findByToAccount_MessageAccountId(messageAccountId: UUID): Optional<List<Message>>
+            + findByFromAccount_MessageAccountId(messageAccountId: UUID): Optional<List<Message>>
         }
     }
 
@@ -88,17 +194,18 @@ package com.chachef {
         class ChefController {
             - chefService: ChefService [1]
 
-            + addChef(chefCreateDto: ChefCreateDto): ResponseEntity<Chef>
-            + getChef(): ResponseEntity<List<Chef>>
+            + addChef(authContext: AuthContext, chefCreateDto: ChefCreateDto): ResponseEntity<Chef>
+            + getAllChefs(): ResponseEntity<List<Chef>>
             + getChefProfile(id: UUID): ResponseEntity<Chef>
         }
 
         note right of ChefController::addChef
           Annotated with:
+          @RequireAuth
           @PostMapping("/create")
         end note
 
-        note right of ChefController::getChef
+        note right of ChefController::getAllChefs
           Annotated with:
           @GetMapping("/list")
         end note
@@ -110,14 +217,15 @@ package com.chachef {
 
         note left of ChefController
           Annotated with:
-          @PostMapping("/chef")
+          @RequestMapping("/chef")
         end note
 
         class UserController {
             - userService: UserService [1]
 
-            + addUser(userCreateDto: UserCreateDto): ResponseEntity<User>
-            + getUser(): ResponseEntity<List<User>>
+            + addUser(userCreateDto: UserCreateDto): ResponseEntity<UserReturnDto>
+            + getAllUsers(): ResponseEntity<List<UserReturnDto>>
+            + getUser(): ResponseEntity<UserReturnDto>
         }
 
         note right of UserController::addUser
@@ -125,77 +233,185 @@ package com.chachef {
           @PostMapping("/create")
         end note
 
-        note right of UserController::getUser
+        note right of UserController::getAllUsers
           Annotated with:
           @GetMapping("/list")
         end note
 
+        note right of UserController::getUser
+          Annotated with:
+          @RequireAuth
+          @GetMapping("/view")
+        end note
+
         note left of UserController
           Annotated with:
-          @PostMapping("/user")
+          @RequestMapping("/user")
         end note
 
         class BookingController {
             - bookingService: BookingService [1]
 
-            + bookingRequest(bookingRequestDto: BookingRequestDto): ResponseEntity<Booking>
-            + viewBookingsUser(userId: UUID): ResponseEntity<List<Booking>>
-            + viewBookingsChef(chefId: UUID): ResponseEntity<List<Booking>>
-            + viewBooking(bookingId: UUID): ResponseEntity<Booking>
-            + changeStatus(changeStatusDto: ChangeStatusDto): ResponseEntity<Void>
-            + deleteBooking(bookingId: UUID): ResponseEntity<Void>
+            + bookingRequest(authContext: AuthContext, bookingRequestDto: BookingRequestDto): ResponseEntity<Booking>
+            + viewBookingsUser(authContext: AuthContext): ResponseEntity<List<Booking>>
+            + viewBookingsChef(authContext: AuthContext, chefId: UUID): ResponseEntity<List<Booking>>
+            + viewBooking(authContext: AuthContext, bookingId: UUID): ResponseEntity<Booking>
+            + changeStatus(authContext: AuthContext, changeStatusDto: ChangeStatusDto): ResponseEntity<Void>
+            + deleteBooking(authContext: AuthContext, bookingId: UUID): ResponseEntity<Void>
         }
 
         note right of BookingController::bookingRequest
           Annotated with:
+          @RequireAuth
           @PostMapping("/create")
         end note
 
         note right of BookingController::viewBookingsUser
           Annotated with:
-          @GetMapping("/list/user/{userId}")
+          @RequireAuth
+          @GetMapping("/list/user")
         end note
 
         note right of BookingController::viewBookingsChef
           Annotated with:
+          @RequireAuth
           @GetMapping("/list/chef/{chefId}")
         end note
 
         note right of BookingController::viewBooking
           Annotated with:
+          @RequireAuth
           @GetMapping("/view/{bookingId}")
         end note
 
         note right of BookingController::changeStatus
           Annotated with:
+          @RequireAuth
           @PutMapping("/update-status")
         end note
 
         note right of BookingController::deleteBooking
           Annotated with:
+          @RequireAuth
           @DeleteMapping("/delete/{bookingId}")
         end note
 
         note left of BookingController
           Annotated with:
-          @PostMapping("/booking")
+          @RequestMapping("/booking")
+        end note
+
+        class AuthController {
+            - authService: AuthService [1]
+
+            + login(loginDto: LoginDto, response: HttpServletResponse): ResponseEntity<Map<String, String>>
+            + logout(refreshToken: String, response: HttpServletResponse): ResponseEntity<Void>
+            + logoutAll(authContext AuthContext, refreshToken: String, response: HttpServletResponse): ResponseEntity<Void>
+            + refresh(refreshToken: String, response: HttpServletResponse): ResponseEntity<Map<String, String>>
+        }
+
+        note right of AuthController::login
+          Annotated with:
+          @PostMapping("/login")
+        end note
+
+        note right of AuthController::logout
+          Annotated with:
+          @PostMapping("/logout")
+        end note
+
+        note right of AuthController::logoutAll
+          Annotated with:
+          @RequireAuth
+          @PostMapping("/logout/all")
+        end note
+
+        note right of AuthController::refresh
+          Annotated with:
+          @PostMapping("/refresh")
+        end note
+
+        note left of AuthController
+          Annotated with:
+          @RequestMapping("/auth")
+        end note
+
+        class MessageController {
+            - messageService: MessageService [1]
+
+            + sendMessage(authContext: AuthContext, messageSendDto: MessageSendDto): ResponseEntity<Void>
+            + listUserMessages(authContext: AuthContext): ResponseEntity<Map<String, List<MessageReturnDto>>>
+            + listChefMessages(authContext: AuthContext, chefId: UUID): ResponseEntity<Map<String, List<MessageReturnDto>>>
+            + viewMessage(authContext: AuthContext, messageId: UUID): ResponseEntity<MessageReturnDto>
+            + userMessageAccount(userId: UUID): ResponseEntity<Map<String, String>>
+            + chefMessageAccount(chefId: UUID): ResponseEntity<Map<String, String>>
+        }
+
+        note right of MessageController::sendMessage
+          Annotated with:
+          @RequireAuth
+          @PostMapping("/send")
+        end note
+
+        note right of MessageController::listUserMessages
+          Annotated with:
+          @RequireAuth
+          @GetMapping("/list/user")
+        end note
+
+        note right of MessageController::listChefMessages
+          Annotated with:
+          @RequireAuth
+          @GetMapping("/list/chef/{chefId}")
+        end note
+
+        note right of MessageController::viewMessage
+          Annotated with:
+          @RequireAuth
+          @GetMapping("/view/{messageId}")
+        end note
+
+        note right of MessageController::userMessageAccount
+          Annotated with:
+          @GetMapping("/user/{userId}/message-account")
+        end note
+
+        note right of MessageController::chefMessageAccount
+          Annotated with:
+          @GetMapping("/chef/{chefId}/message-account")
+        end note
+
+        note left of MessageController
+          Annotated with:
+          @RequestMapping("/message")
         end note
 
         class GlobalExceptionHandler {
             + handleUsernameTakenException(ex: UsernameTakenException): ProblemDetail
             + handleInvalidUserException(ex: InvalidUserException): ProblemDetail
+            + handleInvalidBookingException(ex: InvalidBookingException): ProblemDetail
             + handleMethodArgumentNotValidException(ex: MethodArgumentNotValidException): ResponseEntity<Map<String, Object>>
+            + handleUnauthorizedUserException(ex: UnauthorizedUser): ProblemDetail
+            + handleInternalAppErrorException(ex: InternalAppError): ProblemDetail
+            + handleInvalidMessageException(ex: InvalidMessageException): ProblemDetail
         }
 
+        class WebConfig {
+            - authRequiredInterceptor: AuthRequiredInterceptor [1]
+
+            + addInterceptors(registry: InterceptorRegistry): void
+        }
+
+        class WebCorsConfig {
+            + addCorsMappings(registry: CorsRegistry): void
+        }
     }
 
     package dto {
         class ChefCreateDto {
-            - user: UUID [1]
             - price: double [1]
             - listingName: String [1]
 
-            + getUser(): UUID
             + getPrice(): double
             + getListingName(): String
         }
@@ -203,19 +419,19 @@ package com.chachef {
         class UserCreateDto {
             - username: String [1]
             - name: String [1]
+            - password: String [1]
 
             + getUsername(): String
             + getName(): String
+            + getPassword(): String
         }
 
         class BookingRequestDto {
-            - userId: UUID [1]
             - chefId: UUID [1]
             - start: LocalDateTime [1]
             - end: LocalDateTime [1]
             - address: String [1]
 
-            + getUserId(): UUID
             + getChefId(): UUID
             + getStart(): LocalDateTime
             + getEnd(): LocalDateTime
@@ -229,40 +445,153 @@ package com.chachef {
             + getBookingId(): UUID
             + getStatus(): String
         }
+
+        class LoginDto {
+            - username: String [1]
+            - password: String [1]
+
+            + getUsername(): String
+            + getPassword(): String
+        }
+
+        class UserReturnDto {
+            - userId: UUID [1]
+            - username: String [1]
+            - name: String [1]
+
+            + getUserId(): UUID
+            + getUsername(): String
+            + getName(): String
+        }
     }
 
     package service {
         package exceptions {
+            class InvalidBookingException {}
             class InvalidUserException {}
-
+            class UnauthorizedUser {}
             class UsernameTakenException {}
+            class InternalAppError {}
+            class InvalidMessageException {}
         }
 
         class ChefService {
-            - chefRepository: ChefRepository
-            - userRepository: UserRepository
+            - chefRepository: ChefRepository [1]
+            - userRepository: UserRepository [1]
 
-            + createChef(chefCreateDto: ChefCreateDto): Chef
-            + getChef(): List<Chef>
+            + createChef(chefCreateDto: ChefCreateDto, authContext: AuthContext): Chef
+            + getAllChefs(): List<Chef>
             + getChefProfile(id: UUID): Chef
         }
 
         class UserService {
-            - userRepository: UserRepository
+            - userRepository: UserRepository [1]
 
             + createUser(userCreateDto: UserCreateDto): User
             + getAllUsers(): List<User>
+            + getUser(userId: UUID): User
         }
 
         class BookingService {
-            - bookingRepository: BookingRepository
+            - bookingRepository: BookingRepository [1]
+            - userRepository: UserRepository [1]
+            - chefRepository: ChefRepository [1]
 
-            + bookingRequest(bookingRequestDto: BookingRequestDto): Booking
+            + bookingRequest(bookingRequestDto: BookingRequestDto, authContext: AuthContext): Booking
             + viewBookingsUser(userId: UUID): List<Booking>
-            + viewBookingsChef(chefId: UUID): List<Booking>
-            + viewBooking(bookingId: UUID): Booking
-            + changeStatus(changeStatusDto: ChangeStatusDto): void
-            + deleteBooking(bookingId: UUID): void
+            + viewBookingsChef(chefId: UUID, authContext: AuthContext): List<Booking>
+            + viewBooking(bookingId: UUID, authContext: AuthContext): Booking
+            + changeStatus(changeStatusDto: ChangeStatusDto, authContext: AuthContext): void
+            + deleteBooking(bookingId: UUID, authContext: AuthContext): void
+        }
+
+        class AuthService {
+            - userRepository: UserRepository [1]
+            - jwtService: JwtService [1]
+            - refreshTokensRepository: RefreshTokensRepository [1]
+
+            + login(loginDto: LoginDto): Map<String, String>
+            + logout(refreshToken: String): void
+            + logoutAll(authContext: AuthContext): void
+            + refresh(refreshToken: String): Map<String, String>
+        }
+
+        class JwtService {
+            - accessSecret: Key [1]
+            - refreshSecret: Key [1]
+
+            + generateAccessToken(userId: UUID, username: String, name: String): String
+            + generateRefreshToken(userId: UUID): String
+            + isValidAccessToken(token: String): boolean
+            + isValidRefreshToken(token: String): boolean
+            - validateToken(token: String, key: Key): boolean
+            + getUserId(token: String): UUID
+            + getUsername(token: String): String
+            + getName(token: String): String
+            + getRefreshUserId(token: String): UUID
+            + getRefreshJit(token: String): String
+            - getClaimsFromToken(token: String, key: Key): Claims
+        }
+
+        class MessageService {
+            - messageAccountRepository: MessageAccountRepository [1]
+            - messageRepository: MessageRepository [1]
+            - user: UserRepository [1]
+            - chef: ChefRepository [1]
+
+            + sendMessage(authContext: AuthContext, messageSendDto: MessageSendDto): void
+            + listUserMessages(authContext: AuthContext): Map<String, List<MessageReturnDto>>
+            + listChefMessages(authContext: AuthContext, chefId: UUID): Map<String, List<MessageReturnDto>>
+            + viewMessage(authContext: AuthContext, messageId: UUID): MessageReturnDto
+            + getCreateMessageAccount(chefId UUID): MessageAccount
+            + getCreateMessageAccount(chefId: UUID): MessageAccount
+            - createMessageAccountIfNotExist(userChefId: UUID, type: String): MessageAccount
+            - getMessagesFromMessageAccount(messageAccount: MessageAccount): Map<String, List<MessageReturnDto>>
+        }
+    }
+
+    package dataobjects {
+        class ApplicationJwtBuilder {
+            - secret: Key [1]
+            - expire: int [1]
+            - userId: UUID [1]
+            - username: String [1]
+            - name: String [1]
+            - type: String [1]
+
+            + setType(type: String): ApplicationJwtBuilder
+            + setUserId(userId: UUID): ApplicationJwtBuilder
+            + setUsername(username: String): ApplicationJwtBuilder
+            + setName(name: String): ApplicationJwtBuilder
+            + setSecret(secret: Key): ApplicationJwtBuilder
+            + setExpire(expire: int): ApplicationJwtBuilder
+            + build(): String
+        }
+
+        class AuthContext {
+            - userId: UUID [1]
+            - username: String [1]
+            - name: String [1]
+
+            + getUserId(): UUID
+            + getUsername(): String
+            + getName(): String
+        }
+    }
+
+    package annotations {
+        interface RequireAuth {}
+    }
+
+    package components {
+        class AuthFilter {
+            - jwtService: JwtService [1]
+
+            # doFilterInternal(request: HttpServletRequest, response: HttpServletResponse, filterChain: FilterChain): void
+        }
+
+        class AuthRequiredInterceptor {
+            + preHandle(request: HttpServletRequest, response: HttpServletResponse, handler: Object): boolean
         }
     }
 
@@ -270,32 +599,176 @@ package com.chachef {
         main(args: String[*]): void
     }
 
-    ChefCreateDto <.. ChefController
-    ChefCreateDto <.. ChefService
-    UserCreateDto <.. UserController
-    UserCreateDto <.. UserService
+    Chef *-- User
+    Booking *-- User
+    Booking *-- Chef
+    RefreshTokens *-- User
+    MessageAccount *-- User
+    MessageAccount *-- Chef
+    Message *-- MessageAccount
+
+    WebConfig *-- AuthRequiredInterceptor
+
+
+    AuthFilter o-- JwtService
+    AuthController o-- AuthService
+    BookingController o-- BookingService
+    UserController o-- UserService
+    ChefController o-- ChefService
+    AuthService o-- JwtService
+    MessageController o-- MessageService
+
+    ChefService o-- ChefRepository
+    ChefService o-- UserRepository
+    UserService o-- UserRepository
+    BookingService o-- ChefRepository
+    BookingService o-- UserRepository
+    BookingService o-- BookingRepository
+    AuthService o-- UserRepository
+    AuthService o-- RefreshTokensRepository
+    MessageService o-- MessageAccountRepository
+    MessageService o-- MessageRepository
+    MessageService o-- UserRepository
+    MessageService o-- ChefRepository
+
+
+    OncePerRequestFilter <|-- AuthFilter
+    HandlerInterceptor <|-- AuthRequiredInterceptor
+    WebMvcConfigurer <|-- WebConfig
+    WebMvcConfigurer <|-- WebCorsConfig
+
+    JpaRepository <|-- BookingRepository
+    JpaRepository <|-- ChefRepository
+    JpaRepository <|-- RefreshTokensRepository
+    JpaRepository <|-- UserRepository
+    JpaRepository <|-- MessageAccountRepository
+    JpaRepository <|-- MessageRepository
+
+
+    SpringApplication <.. Application
+
+
+    RequireAuth <.. AuthRequiredInterceptor
+    RequireAuth <.. AuthController
+    RequireAuth <.. BookingController
+    RequireAuth <.. ChefController
+    RequireAuth <.. UserController
+    RequireAuth <.. MessageController
+
+
+    LoginDto <.. AuthController
+
     BookingRequestDto <.. BookingController
     BookingRequestDto <.. BookingService
+
     ChangeStatusDto <.. BookingController
     ChangeStatusDto <.. BookingService
 
-    ChefService *-- ChefRepository
-    ChefService *-- UserRepository
-    UserService *-- UserRepository
-    BookingService *-- BookingRepository
-    BookingService *-- ChefRepository
-    BookingService *-- UserRepository
+    ChefCreateDto <.. ChefController
+    ChefCreateDto <.. ChefService
 
-    InvalidUserException <.. ChefService
-    UsernameTakenException <.. UserService
+    UserCreateDto <.. UserController
+    UserCreateDto <.. UserService
+    UserReturnDto <.. UserController
+
+    MessageSendDto <.. MessageController
+    MessageSendDto <.. MessageService
+
+    MessageReturnDto <.. MessageController
+    MessageReturnDto <.. MessageService
+
+
+    AuthContext <.. AuthFilter
+    AuthContext <.. AuthRequiredInterceptor
+
+    AuthContext <.. AuthController
+    AuthContext <.. BookingController
+    AuthContext <.. ChefController
+    AuthContext <.. UserController
+    AuthContext <.. MessageController
+
+    AuthContext <.. AuthService
+    AuthContext <.. BookingService
+    AuthContext <.. ChefService
+    AuthContext <.. MessageService
+
+    ApplicationJwtBuilder <.. ApplicationJwtBuilder
+    ApplicationJwtBuilder <.. JwtService
+
+
+    AuthRequiredInterceptor <.. WebConfig
+
+
+    Booking <.. BookingService
+    Booking <.. BookingController
+    Booking <.. BookingRepository
+
+    Chef <.. Booking
+    Chef <.. ChefController
+    Chef <.. BookingService
+    Chef <.. ChefService
+    Chef <.. ChefRepository
+    Chef <.. MessageService
+    Chef <.. MessageAccount
+
+    RefreshTokens <.. JwtService
+    RefreshTokens <.. RefreshTokensRepository
+
+    User <.. Booking
+    User <.. Chef
+    User <.. RefreshTokens
+    User <.. BookingService
+    User <.. UserService
+    User <.. UserController
+    User <.. UserRepository
+    User <.. AuthService
+    User <.. MessageService
+    User <.. MessageAccount
+
+    Message <.. MessageService
+    Message <.. MessageRepository
+
+
+    BookingRepository <.. BookingService
+
+    ChefRepository <.. BookingService
+    ChefRepository <.. MessageService
+
+    RefreshTokensRepository <.. AuthService
+    RefreshTokensRepository <.. JwtService
+
+    UserRepository <.. AuthService
+    UserRepository <.. BookingService
+    UserRepository <.. ChefService
+    UserRepository <.. JwtService
+    UserRepository <.. MessageService
+
+
+    InvalidBookingException <.. GlobalExceptionHandler
+    InvalidBookingException <.. BookingService
+
     InvalidUserException <.. GlobalExceptionHandler
-    UsernameTakenException <.. GlobalExceptionHandler
+    InvalidUserException <.. AuthService
+    InvalidUserException <.. ChefService
+    InvalidUserException <.. JwtService
+    InvalidUserException <.. UserService
+    InvalidUserException <.. MessageService
+    InvalidUserException <.. MessageController
 
-    Application ..> SpringApplication
-    SpringApplication ..> BookingController
-    SpringApplication ..> GlobalExceptionHandler
-    SpringApplication ..> UserController
-    SpringApplication ..> ChefController
+    UnauthorizedUser <.. GlobalExceptionHandler
+    UnauthorizedUser <.. AuthService
+    UnauthorizedUser <.. BookingService
+    UnauthorizedUser <.. MessageService
+
+    UsernameTakenException <.. GlobalExceptionHandler
+    UsernameTakenException <.. UserService
+
+    InternalAppError <.. GlobalExceptionHandler
+    InternalAppError <.. MessageService
+    InternalAppError <.. MessageController
+
+    InvalidMessageException <.. GlobalExceptionHandler
+
 }
 
 @enduml
